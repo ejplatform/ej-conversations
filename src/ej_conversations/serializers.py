@@ -58,6 +58,9 @@ class CommentSerializer(HasAuthorSerializer):
             'conversation': {'write_only': True, 'lookup_field': 'slug'},
         }
 
+    def get_inner_links(self, obj):
+        return ['vote']
+
     def get_links(self, obj):
         payload = super().get_links(obj)
         payload['conversation'] = self.url_prefix + reverse(
@@ -71,18 +74,15 @@ class CommentSerializer(HasAuthorSerializer):
 
 
 class VoteSerializer(HasLinksSerializer):
-    VOTE_VALUES = {
-        Vote.AGREE: 'agree',
-        Vote.DISAGREE: 'disagree',
-        Vote.SKIP: 'skip',
-    }
     comment_text = serializers.SerializerMethodField()
+    action = serializers.SerializerMethodField()
 
     class Meta:
         model = Vote
-        fields = ('links', 'id', 'comment', 'value', 'comment_text')
+        fields = ('links', 'comment_text', 'action', 'comment', 'value')
         extra_kwargs = {
-            'comment': {'write_only': True}
+            'comment': {'write_only': True},
+            'value': {'write_only': True},
         }
 
     def get_links(self, obj):
@@ -94,11 +94,9 @@ class VoteSerializer(HasLinksSerializer):
     def get_comment_text(self, obj):
         return obj.comment.content
 
-    def get_value(self, obj):
-        return self.VOTE_VALUES[obj.value]
+    def get_action(self, obj):
+        return Vote.VOTE_NAMES[obj.value]
 
     def create(self, data):
         comment = data.pop('comment')
-        print(data)
         return comment.vote(**data)
-

@@ -7,8 +7,9 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from ej_conversations.mixins import validation_error
 from . import serializers
+from .forms import VoteForm
+from .mixins import validation_error
 from .models import Category, Conversation, Comment, Vote
 from .permissions import IsAdminOrReadOnly
 
@@ -103,6 +104,19 @@ class CommentViewSet(viewsets.ModelViewSet):
             return super().create(request, *args, **kwargs)
         except PermissionError as err:
             return Response(err.args[0])
+
+    @action(detail=True, methods=['POST'])
+    def vote(self, request, pk):
+        form = VoteForm(request.POST)
+        value = form.get_value()
+        comment = self.get_object()
+
+        try:
+            vote = comment.vote(author=request.user, value=value)
+            serializer = serializers.VoteSerializer(vote)
+            return Response(serializer.data)
+        except ValidationError as ex:
+            return Response(validation_error(ex))
 
 
 class VoteViewSet(viewsets.ModelViewSet):

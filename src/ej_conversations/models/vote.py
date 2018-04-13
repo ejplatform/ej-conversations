@@ -18,6 +18,13 @@ class Vote(models.Model):
         (SKIP, _('Skip')),
         (DISAGREE, _('Disagree')),
     )
+    VOTE_NAMES = {
+        AGREE: 'agree',
+        DISAGREE: 'disagree',
+        SKIP: 'skip',
+    }
+    VOTE_VALUES = {v: k for k, v in VOTE_NAMES.items()}
+
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         related_name='votes',
@@ -47,4 +54,3 @@ class Vote(models.Model):
         if not self.comment.is_approved:
             msg = _('comment must be approved to receive votes')
             raise ValidationError(msg)
-        super().save(*args, **kwargs)
