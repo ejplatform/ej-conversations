@@ -42,8 +42,6 @@ class HasLinksSerializer(serializers.HyperlinkedModelSerializer):
         Return the links dictionary mapping resource names to their
         corresponding links according to HATEAOS.
         """
-        request = self.context['request']
-
         # Create default payload
         self_path = self.get_self_url_path(obj)
         self_uri = self.url_prefix + self_path

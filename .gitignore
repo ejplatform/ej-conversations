@@ -3,3 +3,5 @@ db.sqlite3
 __pycache__/
 .pytest_cache/
 .coverage
+.tox/
+src/ej_conversations.egg-info/

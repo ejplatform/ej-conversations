@@ -22,6 +22,7 @@ class CommentAdmin(admin.ModelAdmin):
 class LimitsAdmin(admin.ModelAdmin):
     pass
 
+
 @register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     fields = ['name', 'image', 'image_caption']
