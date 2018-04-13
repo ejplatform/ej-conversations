@@ -47,11 +47,13 @@ class ConversationSerializer(HasAuthorSerializer):
 
 
 class CommentSerializer(HasAuthorSerializer):
+    statistics = serializers.SerializerMethodField()
+
     class Meta:
         model = Comment
         fields = ('links', 'id', 'content', 'author_name',
                   'status', 'created', 'modified', 'rejection_reason',
-                  'conversation')
+                  'conversation', 'statistics')
         read_only_fields = ('id', 'author', 'status', 'rejection_reason')
         extra_kwargs = {
             'category': {'lookup_field': 'slug'},
@@ -71,6 +73,9 @@ class CommentSerializer(HasAuthorSerializer):
     def create(self, validated_data):
         conversation = validated_data.pop('conversation')
         return conversation.create_comment(**validated_data)
+
+    def get_statistics(self, obj):
+        return obj.get_statistics()
 
 
 class VoteSerializer(HasLinksSerializer):
