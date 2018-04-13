@@ -1,0 +1,5 @@
+ratings:
+  paths:
+  - "**.py"
+texclude_paths:
+  - src/ej_conversations/migrations

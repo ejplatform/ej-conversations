@@ -1,0 +1,25 @@
+language: python
+cache: pip
+sudo: false
+
+# Test environments
+matrix:
+  include:
+   - env: TOXENV=py36
+     python: 3.6
+   - env: TOXENV=py3.7
+     python: 3.7
+   - env: TOXENV=flake8
+     python: 3.6
+
+# Package installation
+install:
+  - pip install tox codecov
+
+# Run tests
+script:
+  tox
+
+# Register code coverage
+after_success:
+  codecov

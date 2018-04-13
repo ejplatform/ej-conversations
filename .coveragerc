@@ -2,8 +2,6 @@
 include = src/*
 branch = True
 omit = *migrations*, *tests*
-plugins =
-    django_coverage_plugin
 
 
 [report]
