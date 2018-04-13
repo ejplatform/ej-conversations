@@ -1,9 +1,13 @@
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
+from django.db import IntegrityError
+from django.utils.translation import ugettext as _
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
+from ej_conversations.mixins import validation_error
 from . import serializers
 from .models import Category, Conversation, Comment, Vote
 from .permissions import IsAdminOrReadOnly
@@ -29,6 +33,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
     filter_fields = ['is_promoted', 'category_id']
     lookup_field = 'slug'
     permission_classes = [IsAdminOrReadOnly]
+
+    def get_queryset(self):
+        return Conversation.objects.select_related('author', 'category')
 
     @action(detail=True)
     def user_data(self, request, slug):
@@ -73,8 +80,8 @@ class ConversationViewSet(viewsets.ModelViewSet):
             conversation = Conversation.objects.random(request.user)
         except Conversation.DoesNotExist as msg:
             return Response({
-                "message": str(msg),
-                "error": True,
+                'message': _(str(msg)),
+                'error': True,
             })
         ctx = {'request': request}
         serializer = serializers.ConversationSerializer(conversation, context=ctx)
@@ -83,10 +90,10 @@ class ConversationViewSet(viewsets.ModelViewSet):
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.CommentSerializer
-    queryset = Comment.objects.all()
     filter_backends = [DjangoFilterBackend]
     filter_fields = ['status', 'conversation__slug']
     permission_classes = [IsAdminOrReadOnly]
+    queryset = Comment.objects.select_related('author', 'conversation')
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
@@ -100,7 +107,7 @@ class CommentViewSet(viewsets.ModelViewSet):
 
 class VoteViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.VoteSerializer
-    queryset = Vote.objects.all()
+    queryset = Vote.objects.select_related('comment')
     filter_backends = [DjangoFilterBackend]
     filter_fields = ['comment__conversation__slug']
     permission_classes = [IsAdminOrReadOnly]
@@ -114,3 +121,14 @@ class VoteViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+
+    def create(self, request, *args, **kwargs):
+        try:
+            return super().create(request, *args, **kwargs)
+        except IntegrityError:
+            return Response({
+                'message': _('cannot vote twice in the same conversation'),
+                'error': True,
+            })
+        except ValidationError as ex:
+            return Response(validation_error(ex))

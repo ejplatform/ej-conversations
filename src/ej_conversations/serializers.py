@@ -36,7 +36,14 @@ class ConversationSerializer(HasAuthorSerializer):
         return ['user_data', 'votes', 'approved_comments', 'random_comment']
 
     def get_statistics(self, obj):
-        return obj.get_statistics()
+        # FIXME: for some reason DRF calls this method 4 times when
+        # serializing data. This behavior puts the database into a crawl
+        print('stats!')
+        try:
+            return obj._statistics
+        except AttributeError:
+            obj._statistics = statistics = obj.get_statistics()
+            return statistics
 
 
 class CommentSerializer(HasAuthorSerializer):
@@ -69,24 +76,29 @@ class VoteSerializer(HasLinksSerializer):
         Vote.DISAGREE: 'disagree',
         Vote.SKIP: 'skip',
     }
-    comment_content = serializers.SerializerMethodField()
+    comment_text = serializers.SerializerMethodField()
 
     class Meta:
         model = Vote
-        fields = ('links', 'id', 'value', 'comment_content', 'comment')
+        fields = ('links', 'id', 'comment', 'value', 'comment_text')
         extra_kwargs = {
             'comment': {'write_only': True}
         }
 
     def get_links(self, obj):
         payload = super().get_links(obj)
-        payload['comment'] = self.url_prefix + reverse(
-            'comment-detail', kwargs={'pk': obj.comment.pk}
-        )
+        path = reverse('comment-detail', kwargs={'pk': obj.comment.pk})
+        payload['comment'] = self.url_prefix + path
         return payload
 
-    def get_comment_content(self, obj):
+    def get_comment_text(self, obj):
         return obj.comment.content
 
     def get_value(self, obj):
         return self.VOTE_VALUES[obj.value]
+
+    def create(self, data):
+        comment = data.pop('comment')
+        print(data)
+        return comment.vote(**data)
+

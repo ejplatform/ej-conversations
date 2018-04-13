@@ -1,4 +1,5 @@
 from django.conf import settings
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -41,3 +42,9 @@ class Vote(models.Model):
 
     class Meta:
         unique_together = ('author', 'comment')
+
+    def clean(self, *args, **kwargs):
+        if not self.comment.is_approved:
+            msg = _('comment must be approved to receive votes')
+            raise ValidationError(msg)
+        super().save(*args, **kwargs)

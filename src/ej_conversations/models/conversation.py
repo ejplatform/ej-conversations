@@ -118,7 +118,7 @@ class Conversation(TimeStampedModel):
             comments=dict(
                 approved=comment_count(self, Comment.STATUS.APPROVED),
                 rejected=comment_count(self, Comment.STATUS.REJECTED),
-                unmoderated=comment_count(self, Comment.STATUS.PENDING),
+                pending=comment_count(self, Comment.STATUS.PENDING),
                 total=comment_count(self),
             ),
 

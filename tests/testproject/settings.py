@@ -13,23 +13,27 @@ SECRET_KEY = 'xxj**kt26^x+cjbx-4k9kf=849n51jfl+v-m5d5c+w-&#!acu+'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost']
+INTERNAL_IPS = ['127.0.0.1']
 
 # Application definition
 
 INSTALLED_APPS = [
-    'ej_conversations',
-    'django_filters',
-    'rest_framework',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    'ej_conversations',
+    'django_filters',
+    'rest_framework',
+    'debug_toolbar',
 ]
 
 MIDDLEWARE = [
+    'debug_toolbar.middleware.DebugToolbarMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',

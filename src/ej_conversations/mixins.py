@@ -113,3 +113,16 @@ class AuthorAsCurrentUserMixin:
 
     def perform_update(self, serializer):
         serializer.save(author=self.request.user)
+
+
+def validation_error(err, status_code=403):
+    """
+    Return a JSON message describing a validation error.
+    """
+    errors = err.messages
+    msg = {'status_code': status_code, 'error': True}
+    if len(errors) == 1:
+        msg['message'] = errors[0]
+    else:
+        msg['messages'] = errors
+    return msg

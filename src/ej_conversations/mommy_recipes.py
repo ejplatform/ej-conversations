@@ -4,28 +4,16 @@ from model_mommy.recipe import Recipe
 
 from .models import Comment, Conversation, Category
 
-user = Recipe(
-    User,
-    is_superuser=False,
-)
-
-root = Recipe(
-    User,
-    is_superuser=True,
-)
-
-category = Recipe(
-    Category,
-    name='Category',
-    slug='category',
-)
-
+user = Recipe(User, is_superuser=False, username='user')
+root = Recipe(User, is_superuser=True, username='root')
+category = Recipe(Category, name='Category', slug='category')
+comment = Recipe(Comment)
 conversation = Recipe(
     Conversation,
-)
-
-comment = Recipe(
-    Comment,
+    title='Conversation',
+    slug='conversation',
+    author=user.make,
+    description='description'
 )
 
 

@@ -42,6 +42,7 @@ class Comment(StatusModel, TimeStampedModel):
         _('Rejection reason'),
         blank=True,
     )
+    is_approved = property(lambda self: self.status == self.STATUS.APPROVED)
 
     class Meta:
         unique_together = ('conversation', 'content')
@@ -49,23 +50,32 @@ class Comment(StatusModel, TimeStampedModel):
     def __str__(self):
         return self.content
 
-    agree_votes_no = property(lambda self: votes_counter(self, Vote.AGREE))
-    disagree_votes_no = property(lambda self: votes_counter(self, Vote.DISAGREE))
-    pass_votes_no = property(lambda self: votes_counter(self, Vote.SKIP))
-    total_votes_no = property(lambda self: votes_counter(self))
-
-    def vote(self, user, vote, commit=True):
+    def vote(self, author, value, commit=True):
         """
-        Cast a user vote for the current comment.
+        Cast a vote for the current comment.
+        """
+        log.debug(f'Vote: {author} - {value}')
+        vote = Vote(author=author, comment=self, value=value)
+        vote.full_clean()
+        if commit:
+            vote.save()
+        return vote
+
+    def get_statistics(self):
+        """
+        Return full voting statistics for given comment.
         """
 
-        log.debug(f'Vote: {user} - {vote}')
-        make_vote = Vote.objects.create if commit else Vote
-        return make_vote(author=user, comment=self, value=vote)
+        return dict(
+            agree=votes_counter(self, Vote.AGREE),
+            disagree=votes_counter(self, Vote.DISAGREE),
+            skip=votes_counter(self, Vote.SKIP),
+            total=votes_counter(self),
+        )
 
 
-def votes_counter(self, value=None):
+def votes_counter(comment, value=None):
     if value is None:
-        return self.votes.filter(value=value).count()
+        return comment.votes.filter(value=value).count()
     else:
-        return self.votes.count()
+        return comment.votes.count()
