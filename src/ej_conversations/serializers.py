@@ -33,7 +33,7 @@ class ConversationSerializer(HasAuthorSerializer):
         }
 
     def get_inner_links(self, obj):
-        return ['user_data', 'votes', 'approved_comments']
+        return ['user_data', 'votes', 'approved_comments', 'random_comment']
 
     def get_statistics(self, obj):
         return obj.get_statistics()

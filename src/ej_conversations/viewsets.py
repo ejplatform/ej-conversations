@@ -53,6 +53,33 @@ class ConversationViewSet(viewsets.ModelViewSet):
         )
         return Response(serializer.data)
 
+    @action(detail=True)
+    def random_comment(self, request, slug):
+        conversation = self.get_object()
+        try:
+            comment = conversation.get_next_comment(request.user)
+        except Comment.DoesNotExist as msg:
+            return Response({
+                "message": str(msg),
+                "error": True,
+            })
+        ctx = {'request': request}
+        serializer = serializers.CommentSerializer(comment, context=ctx)
+        return Response(serializer.data)
+
+    @action(detail=False)
+    def random(self, request):
+        try:
+            conversation = Conversation.objects.random(request.user)
+        except Conversation.DoesNotExist as msg:
+            return Response({
+                "message": str(msg),
+                "error": True,
+            })
+        ctx = {'request': request}
+        serializer = serializers.ConversationSerializer(conversation, context=ctx)
+        return Response(serializer.data)
+
 
 class CommentViewSet(viewsets.ModelViewSet):
     serializer_class = serializers.CommentSerializer

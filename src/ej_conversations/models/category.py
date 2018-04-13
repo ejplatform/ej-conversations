@@ -20,7 +20,6 @@ class Category(TimeStampedModel):
         help_text=_('Unique category name. Hint: list of categories is public.'),
     )
     slug = AutoSlugField(
-        null=True, default=None,
         unique=True,
         populate_from='name',
         slugify=custom_slugify,

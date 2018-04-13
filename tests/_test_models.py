@@ -31,15 +31,6 @@ class TestConversation:
         assert old_counter == 0
         assert new_counter == 1
 
-    def test_nudge_enum_status_codes(self, conversation: Conversation):
-        """
-        Nudge blocked status should return too many request http status code (429)
-        Eager and normal status should return a success http status code (200)
-        """
-        assert conversation.NUDGE.interval_blocked.value['status_code'] == 429
-        assert conversation.NUDGE.global_blocked.value['status_code'] == 429
-        assert conversation.NUDGE.eager.value['status_code'] == 201
-        assert conversation.NUDGE.normal.value['status_code'] == 201
 
     def test_nudge_get_datetime_interval(self, conversation: Conversation):
         """

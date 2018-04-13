@@ -10,6 +10,10 @@ class Limits(models.Model):
     Configure the allowed rate users can post and vote on comments.
     """
 
+    description = models.CharField(
+        _('Description'),
+        max_length=140,
+    )
     interval = models.IntegerField(
         _('Reference interval'),
         default=10 * 60,
@@ -31,8 +35,11 @@ class Limits(models.Model):
         help_text=_('Global number of comments'),
     )
 
+    class Meta:
+        verbose_name_plural = _('Usage limits')
+
     def __str__(self):
-        return self.categories.first().name
+        return self.description
 
     def get_comment_status(self, user, conversation):
         """

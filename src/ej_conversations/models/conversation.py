@@ -13,6 +13,7 @@ from .limits import Limits
 from .vote import Vote
 from ..utils import CommentLimitStatus
 from ..utils import custom_slugify
+from .managers import ConversationManager
 
 NOT_GIVEN = object()
 
@@ -57,7 +58,14 @@ class Conversation(TimeStampedModel):
         on_delete=models.SET_NULL,
         blank=True, null=True,
     )
+    style = models.ForeignKey(
+        'ConversationStyle',
+        related_name='conversations',
+        on_delete=models.SET_NULL,
+        blank=True, null=True,
+    )
 
+    objects = ConversationManager()
     votes = property(lambda self:
                      Vote.objects.filter(comment__conversation_id=self.id))
 
@@ -68,6 +76,7 @@ class Conversation(TimeStampedModel):
         return self.title
 
     def get_absolute_url(self):
+        # TODO: make this configurable!
         return '/conversations/' + self.slug
 
     def create_comment(self, author, content, commit=True, *,
@@ -105,7 +114,7 @@ class Conversation(TimeStampedModel):
                 total=vote_count(self),
             ),
 
-            # Comment count
+            # Comment counts
             comments=dict(
                 approved=comment_count(self, Comment.STATUS.APPROVED),
                 rejected=comment_count(self, Comment.STATUS.REJECTED),
@@ -115,8 +124,7 @@ class Conversation(TimeStampedModel):
 
             # Participants count
             participants=get_user_model().objects
-                .filter(
-                votes__comment__conversation_id=self.id)
+                .filter(votes__comment__conversation_id=self.id)
                 .distinct()
                 .count(),
         )
@@ -166,7 +174,7 @@ class Conversation(TimeStampedModel):
 
     def get_next_comment(self, user, default=NOT_GIVEN):
         """
-        Returns a comment that user didn't vote yet.
+        Returns a random comment that user didn't vote yet.
 
         If default value is not given, raises a Comment.DoesNotExit exception
         if no comments are available for user.
@@ -174,7 +182,7 @@ class Conversation(TimeStampedModel):
         unvoted_comments = self.comments.filter(
             ~Q(author_id=user.id),
             ~Q(votes__author_id=user.id),
-            status=Comment.STATUS.approved,
+            status=Comment.STATUS.APPROVED,
         )
         size = unvoted_comments.count()
         if size:

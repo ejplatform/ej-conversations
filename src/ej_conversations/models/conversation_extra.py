@@ -33,10 +33,9 @@ class ConversationPhases(models.Model):
 
 
 class ConversationStyle(models.Model):
-    conversation = models.OneToOneField(
-        'Conversation',
-        related_name='style',
-        on_delete=models.CASCADE,
+    description = models.CharField(
+        _('Description'),
+        max_length=140,
     )
     background_image = models.ImageField(
         _('Background image'),
