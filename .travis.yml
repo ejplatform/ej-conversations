@@ -5,7 +5,9 @@ sudo: false
 # Test environments
 matrix:
   include:
-   - env: TOXENV=py36
+   - env: TOXENV=py36-django1.11
+     python: 3.6
+   - env: TOXENV=py36-django2.0
      python: 3.6
    - env: TOXENV=flake8
      python: 3.6
