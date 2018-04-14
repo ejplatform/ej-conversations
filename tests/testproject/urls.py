@@ -1,7 +1,10 @@
 import debug_toolbar
 from django.contrib import admin
-from django.urls import include, re_path as url
 from rest_framework.routers import DefaultRouter
+try:
+    from django.urls import include, re_path as url
+except ImportError:
+    from django.conf.urls import include, url
 
 from ej_conversations.api import register_routes
 

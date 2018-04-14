@@ -2,8 +2,10 @@
 import os
 import sys
 
+basedir = os.path.dirname(__file__)
+sys.path.extend([basedir, os.path.join(basedir, 'src')])
+
 if __name__ == "__main__":
-    sys.path.extend(['.', 'src'])
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "tests.testproject.settings")
     try:
         from django.core.management import execute_from_command_line
