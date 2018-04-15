@@ -33,7 +33,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 @register(Conversation)
 class ConversationAdmin(admin.ModelAdmin):
-    fields = ['author', 'title', 'description', 'is_promoted', 'category', 'nudge_limit']
+    fields = ['author', 'title', 'description', 'is_promoted', 'category']
     list_display = ['slug', 'title', 'author', 'created', 'modified']
     list_filter = ['is_promoted']
     raw_id_fields = ['author']
