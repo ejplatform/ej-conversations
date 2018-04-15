@@ -95,7 +95,9 @@ class HasAuthorSerializer(HasLinksSerializer):
         payload = super().get_links(obj)
 
         # Insert author url as an absolute url
-        url_path = reverse('user-detail',
+        # FIXME: the use of namespaces on reverse URL resolution may lead
+        # to a tight app coupling. This must be avoided
+        url_path = reverse('users:user-detail',
                            kwargs={'username': obj.author.username})
         payload['author'] = self.url_prefix + url_path
         return payload
