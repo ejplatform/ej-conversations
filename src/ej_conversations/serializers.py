@@ -36,9 +36,6 @@ class ConversationSerializer(HasAuthorSerializer):
         return ['user_data', 'votes', 'approved_comments', 'random_comment']
 
     def get_statistics(self, obj):
-        # FIXME: for some reason DRF calls this method 4 times when
-        # serializing data. This behavior puts the database into a crawl
-        print('stats!')
         try:
             return obj._statistics
         except AttributeError:
