@@ -76,18 +76,6 @@ class HasLinksSerializer(serializers.HyperlinkedModelSerializer):
         return ()
 
 
-def join_url(head, *args):
-    """
-    Join url parts. It prevents duplicate backslashes when joining url
-    elements.
-    """
-    if not args:
-        return head
-    else:
-        tail = join_url(*args)
-        return f"{head.rstrip('/')}/{tail.lstrip('/')}"
-
-
 class HasAuthorSerializer(HasLinksSerializer):
     author_name = serializers.SerializerMethodField()
 
@@ -111,6 +99,18 @@ class AuthorAsCurrentUserMixin:
 
     def perform_update(self, serializer):
         serializer.save(author=self.request.user)
+
+
+def join_url(head, *args):
+    """
+    Join url parts. It prevents duplicate backslashes when joining url
+    elements.
+    """
+    if not args:
+        return head
+    else:
+        tail = join_url(*args)
+        return f"{head.rstrip('/')}/{tail.lstrip('/')}"
 
 
 def validation_error(err, status_code=403):

@@ -7,6 +7,7 @@ class EjConversationsConfig(AppConfig):
     verbose_name = "EJ Conversations"
 
     def ready(self):
+
         if getattr(settings, 'EJ_CONVERSATIONS_ACTSTREAM', False):
             from actstream import registry
 

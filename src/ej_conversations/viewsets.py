@@ -38,6 +38,9 @@ class ConversationViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return Conversation.objects.select_related('author', 'category')
 
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
     @action(detail=True)
     def user_data(self, request, slug):
         conversation = self.get_object()
