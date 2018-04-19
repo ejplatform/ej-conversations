@@ -5,7 +5,7 @@ import random
 from django.contrib.auth import get_user_model
 from django.urls import reverse
 
-from ej.conversations.models import (
+from ej_conversations.models import (
     Conversation,
     Comment,
     Vote,
