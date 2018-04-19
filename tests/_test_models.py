@@ -5,12 +5,12 @@ import pytest
 from django.db.utils import IntegrityError
 from django.utils.timezone import make_aware, get_current_timezone
 
-from ej.conversations.models import (
+from ej_conversations.models import (
     Conversation,
     Comment,
     Vote,
 )
-from ej.conversations.models.conversation import get_datetime_interval, \
+from ej_conversations.models.conversation import get_datetime_interval, \
     get_nudge_interval_comments, is_user_nudge_eager, \
     is_user_nudge_interval_blocked, is_user_nudge_global_limit_blocked
 from .helpers import (

@@ -1,9 +1,10 @@
 import pytest
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from model_mommy.recipe import Recipe
 
 from .models import Comment, Conversation, Category
 
+User = get_user_model()
 user = Recipe(User, is_superuser=False, username='user')
 root = Recipe(User, is_superuser=True, username='root')
 category = Recipe(Category, name='Category', slug='category')
