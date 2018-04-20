@@ -40,3 +40,15 @@ class Category(TimeStampedModel):
 
     def __str__(self):
         return self.name
+
+    def new_conversation(self, question, title, author, *, commit=True, **kwargs):
+        """
+        Creates a new conversation in the current category.
+        """
+        kwargs.update(title=title, question=question, author=author)
+        if commit:
+            return self.conversations.create(**kwargs)
+        else:
+            from .conversation import Conversation
+
+            return Conversation(category=self, **kwargs)
