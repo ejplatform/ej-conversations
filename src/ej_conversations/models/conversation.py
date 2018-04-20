@@ -26,22 +26,32 @@ class Conversation(TimeStampedModel):
     A topic of conversation.
     """
 
+    question = models.TextField(
+        _('Question'),
+        help_text=_(
+            'A question that is displayed to the users in a conversation card. (e.g.: How can we '
+            'improve the school system in our community?)'
+        ),
+    )
     title = models.CharField(
         _('Title'),
         max_length=255,
-    )
-    description = models.TextField(
-        _('Description'),
+        help_text=_(
+            'A short description about this conversations. This is used for internal reference'
+            'and to create URL slugs. (e.g. School system)'
+        )
     )
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        help_text=_(
+            'Only the author and administrative staff can edit this conversation.'
+        )
     )
     category = models.ForeignKey(
         'Category',
         related_name='conversations',
-        null=True, blank=True,
-        on_delete=models.SET_NULL,
+        on_delete=models.CASCADE,
     )
     slug = AutoSlugField(
         unique=True,
@@ -65,6 +75,7 @@ class Conversation(TimeStampedModel):
         blank=True, null=True,
     )
 
+    category_name = property(lambda self: self.category.name)
     objects = ConversationManager()
     votes = property(lambda self:
                      Vote.objects.filter(comment__conversation_id=self.id))
