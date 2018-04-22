@@ -13,12 +13,12 @@ conversation = Recipe(
     title='Conversation',
     question='question?',
     slug='conversation',
-    author=user.make,
+    author=lambda: user.make(username='conversation_author'),
     category=category.make,
 )
 comment = Recipe(
     Comment,
-    author=lambda: user.make(username='author'),
+    author=lambda: user.make(username='comment_author'),
     content='comment',
     conversation=conversation.make,
     status=Comment.STATUS.APPROVED,

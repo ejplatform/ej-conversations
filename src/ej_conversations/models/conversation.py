@@ -93,6 +93,22 @@ class Conversation(TimeStampedModel):
     def __str__(self):
         return self.title
 
+    @property
+    def approved_comments(self):
+        """
+        Return a sequence of all approved comments for conversation.
+        """
+        return self.comments.filter(status=Comment.STATUS.APPROVED)
+
+    def get_votes(self, user=None):
+        """
+        Get all votes for the conversation.
+
+        If a user is supplied, filter votes for the given user.
+        """
+        kwargs = {'author_id': user.id} if user else {}
+        return Vote.objects.filter(comment__conversation_id=self.id, **kwargs)
+
     def get_absolute_url(self):
         map = getattr(settings, 'EJ_CONVERSATIONS_URLMAP', {})
         fmt = map.get('conversation-detail', None)
@@ -100,7 +116,7 @@ class Conversation(TimeStampedModel):
             return reverse('conversation-detail', kwargs={'slug': self.slug})
         return fmt.format(conversation=self)
 
-    def create_comment(self, author, content, commit=True, *,
+    def create_comment(self, author, content, commit=True, *, status=None,
                        check_limits=True, **kwargs):
         """
         Create a new comment object for the given user.
@@ -111,6 +127,12 @@ class Conversation(TimeStampedModel):
         limits imposed by the conversation. It also normalizes duplicate
         comments and reuse duplicates from the database.
         """
+
+        # Convert status, if necessary
+        status = Comment.normalize_status(status)
+        kwargs['status'] = status
+
+        # Check limits
         if check_limits:
             limit = self.get_limit_status(author)
             if limit in BAD_LIMIT_STATUS:
@@ -152,52 +174,43 @@ class Conversation(TimeStampedModel):
                 .count(),
         )
 
-    def get_user_data(self, user):
+    def get_user_statistics(self, user):
         """
         Get information about user.
         """
-        if not user.id:
-            return dict(
-                participation_ratio=0.0,
-            )
+        max_votes = self.get_maximum_votes(user)
+        given_votes = self.get_given_votes(user)
+
+        e = 1e-50  # for numerical stability
         return dict(
-            participation_ratio=self.get_participation_ratio(user),
+            votes=given_votes,
+            missing_votes=max_votes - given_votes,
+            participation_ratio=given_votes / (max_votes + e),
         )
 
-    def get_votes(self, user=None):
+    def get_maximum_votes(self, user):
         """
-        Get all votes for the conversation.
-
-        If a user is supplied, filter votes for the given user.
+        Return the maximum number of votes a user can cast in the given
+        conversation.
         """
-        kwargs = {'author_id': user.id} if user else {}
-        return Vote.objects.filter(comment__conversation_id=self.id, **kwargs)
-
-    def get_comments(self):
-        """
-        Return a sequence of all approved comments for conversation.
-        """
-        return self.comments.filter(status=Comment.STATUS.APPROVED)
-
-    def get_participation_ratio(self, user):
-        """
-        Ratio between "given votes" / "possible votes" for an specific user.
-        """
-        max_votes = (
+        return (
             self.comments
-                .filter(status=Comment.APPROVED)
-                .exclude(author=user)
+                .filter(status=Comment.STATUS.APPROVED)
+                .exclude(author_id=user.id)
                 .count()
         )
-        if not max_votes:
+
+    def get_given_votes(self, user):
+        """
+        Get the number of votes a given user has cast in conversation.
+        """
+        if user.id is None:
             return 0
-        else:
-            votes = (
-                Vote.objects
-                    .filter(comment__conversation_id=self.id, author=user)
-                    .count()
-            )
-            return votes / max_votes
+        return (
+            Vote.objects
+                .filter(comment__conversation_id=self.id, author=user)
+                .count()
+        )
 
     def get_next_comment(self, user, default=NOT_GIVEN):
         """
@@ -222,17 +235,42 @@ class Conversation(TimeStampedModel):
 
     def get_limit_status(self, user):
         """
-        Verify specific user nudge status in a conversation
+        Verify specific user limits for posting comments in a conversation.
         """
         limits = self.limits or Limits()
         return limits.get_comment_status(user, self)
 
     def get_vote_data(self, user=None):
         """
-        Like get_votes(), but resturn a list of (value, author, comment)
+        Like get_votes(), but restur a list of (value, author, comment)
         tuples for each vote cast in the conversation.
         """
         return list(self.get_votes(user))
+
+    def set_limits(self, limits=None, commit=True, **kwargs):
+        """
+        Sets the limit object for conversation.
+
+        It accepts a simple :cls:`Limits` object, its name as a string or a
+        set of keyword arguments defining the limit fields.
+        """
+        if isinstance(limits, str):
+            limits = Limits.objects.get(name=limits)
+        if not isinstance(limits, Limits):
+            limits = Limits(**kwargs)
+        elif kwargs:
+            print(limits)
+            limits.__init__(**kwargs)
+            print(limits)
+        if not limits.name:
+            limits.name = f'{self.slug} limits'
+
+        self.limits = limits
+        if commit:
+            limits.save()
+        if commit:
+            self.save(update_fields=['limits'])
+        return limits
 
 
 def vote_count(conversation, type=None):

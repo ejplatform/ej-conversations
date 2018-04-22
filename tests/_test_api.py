@@ -9,9 +9,8 @@ from ej_conversations.models import Conversation
 from .helpers import post_valid_comment
 
 pytestmark = pytest.mark.django_db
-
-
 pytest.fixture
+
 
 class TestConversationAPI:
 

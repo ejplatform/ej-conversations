@@ -21,7 +21,7 @@ class TestRoutes:
 
         # Check inner links work
         assert api.get(path + 'user_data/') == {
-            'participation_ratio': 0.0,
+            'missing_votes': 0, 'participation_ratio': 0.0, 'votes': 0
         }
         assert api.get(path + 'votes/') == []
         assert api.get(path + 'approved_comments/') == []

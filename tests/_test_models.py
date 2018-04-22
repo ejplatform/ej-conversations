@@ -228,7 +228,7 @@ class TestConversation:
     def test_get_user_participation_ratio(self, user, other_user, conversation: Conversation):
         """
         User participation ratio should be the total of user votes divided by
-        the total of comments maden by other users
+        the total of comments made by other users
         """
         comment = create_valid_comment(conversation, other_user)
         create_valid_comment(conversation, user)
@@ -246,9 +246,3 @@ class TestConversation:
         assert user_partipation_ratio == 0
 
 
-class TestVote:
-    def test_unique_vote_per_comment(self, other_user, comment):
-        comment.votes.create(author=other_user, value=Vote.AGREE)
-
-        with pytest.raises(IntegrityError) as err:
-            comment.votes.create(author=other_user, value=Vote.AGREE)

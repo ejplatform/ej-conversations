@@ -3,8 +3,9 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
-VOTING_ERROR = (lambda: ValueError(
-    f"vote should be one of 'agree', 'disagree' or 'skip', got {value}"))
+VOTING_ERROR = (lambda value: ValueError(
+    f"vote should be one of 'agree', 'disagree' or 'skip', got {value}")
+)
 
 
 class Vote(models.Model):
@@ -64,7 +65,7 @@ class Vote(models.Model):
         try:
             return cls.VOTE_VALUES[value]
         except KeyError:
-            raise VOTING_ERROR()
+            raise VOTING_ERROR(value)
 
     def clean(self, *args, **kwargs):
         if self.comment.is_pending:

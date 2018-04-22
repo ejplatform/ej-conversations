@@ -23,7 +23,10 @@ class Comment(StatusModel, TimeStampedModel):
         ('APPROVED', _('approved')),
         ('REJECTED', _('rejected')),
     )
-
+    STATUS_MAP = {
+        'pending': STATUS.PENDING, 'approved': STATUS.APPROVED,
+        'rejected': STATUS.REJECTED,
+    }
     conversation = models.ForeignKey(
         'Conversation',
         related_name='comments',
@@ -50,6 +53,18 @@ class Comment(StatusModel, TimeStampedModel):
     is_approved = property(lambda self: self.status == self.STATUS.APPROVED)
     is_pending = property(lambda self: self.status == self.STATUS.PENDING)
     is_rejected = property(lambda self: self.status == self.STATUS.REJECTED)
+
+    @classmethod
+    def normalize_status(cls, value):
+        """
+        Convert status string values to safe db representations.
+        """
+        if value is None:
+            return cls.STATUS.PENDING
+        try:
+            return cls.STATUS_MAP[value]
+        except KeyError:
+            raise ValueError(f'invalid status value: {value}')
 
     class Meta:
         unique_together = ('conversation', 'content')

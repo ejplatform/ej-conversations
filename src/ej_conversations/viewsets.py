@@ -44,7 +44,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     @action(detail=True)
     def user_data(self, request, slug):
         conversation = self.get_object()
-        return Response(conversation.get_user_data(request.user))
+        return Response(conversation.get_user_statistics(request.user))
 
     @action(detail=True)
     def votes(self, request, slug):
@@ -57,7 +57,7 @@ class ConversationViewSet(viewsets.ModelViewSet):
     @action(detail=True)
     def approved_comments(self, request, slug):
         conversation = self.get_object()
-        comments = conversation.get_comments()
+        comments = conversation.approved_comments.all()
         serializer = serializers.CommentSerializer(
             comments, many=True,
             context={'request': request}

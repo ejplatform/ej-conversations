@@ -10,8 +10,8 @@ class Limits(models.Model):
     Configure the allowed rate users can post and vote on comments.
     """
 
-    description = models.CharField(
-        _('Description'),
+    name = models.CharField(
+        _('Name'),
         max_length=140,
         unique=True,
         help_text=_(
@@ -59,12 +59,13 @@ class Limits(models.Model):
             'enforced by default.'
         ),
     )
+    timedelta = property(lambda self: timezone.timedelta(seconds=self.interval))
 
     class Meta:
         verbose_name_plural = _('Usage limits')
 
     def __str__(self):
-        return self.description
+        return self.name
 
     def get_comment_status(self, user, conversation):
         """
@@ -94,7 +95,7 @@ class Limits(models.Model):
         Return the number of comments a user can still post in a conversation
         in the reference interval.
         """
-        start_time = timezone.now() - timezone.timedelta(seconds=self.interval)
+        start_time = self._now() - self.timedelta
         comments = (
             user.comments
                 .filter(conversation_id=conversation.id)
@@ -102,3 +103,8 @@ class Limits(models.Model):
                 .count()
         )
         return max(self.max_comments_in_interval - comments, 0)
+
+    @staticmethod
+    def _now():
+        # Useful for mocking
+        return timezone.now()
