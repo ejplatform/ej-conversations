@@ -219,10 +219,9 @@ class Conversation(TimeStampedModel):
         If default value is not given, raises a Comment.DoesNotExit exception
         if no comments are available for user.
         """
-        unvoted_comments = self.comments.filter(
+        unvoted_comments = self.approved_comments.filter(
             ~Q(author_id=user.id),
             ~Q(votes__author_id=user.id),
-            status=Comment.STATUS.APPROVED,
         )
         size = unvoted_comments.count()
         if size:

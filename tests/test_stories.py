@@ -80,8 +80,8 @@ class TestCommentLimitsStory:
 
 class TestStatistics:
     """
-    We create a small, but plausible scenario and check if statistics are
-    correct.
+    We create a small, but plausible scenario of comments in a conversation
+    and check if statistics are correct.
     """
 
     def test_conversation_statistics(self, mk_conversation, mk_user):
@@ -108,6 +108,9 @@ class TestStatistics:
                 votes.append(comment.vote(user, 'agree'))
             for user in g2:
                 votes.append(comment.vote(user, 'disagree'))
+
+            # Alternate between a pair who skip and miss to a pair who miss
+            # and then skip ==> 5 skips and 5 misses in total
             for j, user in enumerate(g3):
                 if (i + j) % 2 == 0:
                     votes.append(comment.vote(user, 'skip'))

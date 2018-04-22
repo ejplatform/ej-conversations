@@ -6,7 +6,7 @@ from .models import Comment, Conversation, Category, Vote
 
 User = get_user_model()
 user = Recipe(User, is_superuser=False, username='user')
-root = Recipe(User, is_superuser=True, username='root')
+root = Recipe(User, is_superuser=True, username='root', is_staff=True)
 category = Recipe(Category, name='Category', slug='category')
 conversation = Recipe(
     Conversation,
