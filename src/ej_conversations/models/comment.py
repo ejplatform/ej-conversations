@@ -2,7 +2,6 @@ from logging import getLogger
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.core.validators import MaxLengthValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from model_utils.choices import Choices
