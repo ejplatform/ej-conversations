@@ -2,19 +2,32 @@ import pytest
 from django.contrib.auth import get_user_model
 from model_mommy.recipe import Recipe
 
-from .models import Comment, Conversation, Category
+from .models import Comment, Conversation, Category, Vote
 
 User = get_user_model()
 user = Recipe(User, is_superuser=False, username='user')
 root = Recipe(User, is_superuser=True, username='root')
 category = Recipe(Category, name='Category', slug='category')
-comment = Recipe(Comment)
 conversation = Recipe(
     Conversation,
     title='Conversation',
+    question='question?',
     slug='conversation',
     author=user.make,
-    description='description'
+    category=category.make,
+)
+comment = Recipe(
+    Comment,
+    author=lambda: user.make(username='author'),
+    content='comment',
+    conversation=conversation.make,
+    status=Comment.STATUS.APPROVED,
+)
+vote = Recipe(
+    Vote,
+    comment=comment.make,
+    author=lambda: user.make(username='voter'),
+    value=Vote.AGREE,
 )
 
 

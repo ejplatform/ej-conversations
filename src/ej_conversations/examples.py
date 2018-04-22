@@ -1,12 +1,14 @@
 """
 A few functions for creating plausible synthetic data.
 """
-from django.contrib.auth import get_user_model
-from random import choice
+from random import choice, random
 
+from django.contrib.auth import get_user_model
 from django.db.models import Model
 
-from .models import Category
+from .models import Category, Comment
+from faker import Factory
+fake = Factory.create()
 
 User = get_user_model()
 
@@ -26,28 +28,91 @@ class ExampleData:
             self.log(value)
         super().__setattr__(key, value)
 
+    def _comment_factory(self, conversation):
+        create = conversation.create_comment
+        return (
+            lambda comment, status=Comment.STATUS.APPROVED: create(
+                self.get_user(),
+                comment,
+                check_limits=False,
+                status=status)
+        )
+
     def make_categories(self):
         self.democracy, _ = Category.objects.get_or_create(name='Democracy')
         self.tech, _ = Category.objects.get_or_create(name='Technical')
 
     def make_conversations(self):
-        self.better_language = self.tech.new_conversation(
+        self.better_language = self.tech.create_conversation(
             'We want to create the best programming language. How it should be?',
             'A better programming language',
             self.get_staff_user(),
         )
-        self.school_system = self.democracy.new_conversation(
-            'How can we improve the school system in our community?',
+        self.school_system = self.democracy.create_conversation(
+            'How can we improve the schools and education in our community?',
             'School system',
             self.get_staff_user(),
         )
+        self.participation = self.democracy.create_conversation(
+            'How can we make our democracy more participative?',
+            'Participative democracy',
+            self.get_staff_user(),
+        )
+
+    def make_language_comments(self):
+        new = self._comment_factory(self.better_language)
+        new('It must be functional to control side-effects.')
+        new('I want a purely OO language.')
+        new('We have Python! We don\'t need a new language!')
+        new('It has to run on the browser.')
+        new('It must be really fast.')
+        new('I want a statically typed language.')
+        new('It must be dynamic, but accept type hints.',
+            status=Comment.STATUS.PENDING)
+
+    def make_school_comments(self):
+        new = self._comment_factory(self.school_system)
+        new('We need more arts and crafts lessons.')
+        new('We have to encourage the use technology and teach programming.')
+        new('Our curriculum should be open and focused on real problems.')
+        new('Students should have a say on what they want to learn.')
+        new('We don\'t need no education! We don\'t need no thought control!',
+            status=Comment.STATUS.PENDING)
+
+    def make_democracy_comments(self, extra=50):
+        new = self._comment_factory(self.participation)
+        new('People should have direct power to decide community affairs.')
+        new('We need to forbid corporations from financing elections.')
+        new('We need better voting systems.', status=Comment.STATUS.PENDING)
+        for _ in range(extra):
+            new(fake.paragraph())
+
+    def make_votes(self):
+        comments = list(Comment.APPROVED.all())
+        probs = [(x, random(), random(), random() / 3) for x in comments]
+        for comment, p_vote, p_ok, p_skip in probs:
+            for user in self.users:
+                if random() < p_vote:
+                    if random() < p_skip:
+                        comment.vote(user, 'skip')
+                    elif random() < p_ok:
+                        comment.vote(user, 'agree')
+                    else:
+                        comment.vote(user, 'disagree')
 
     def make_all(self):
         self.make_categories()
         self.make_conversations()
+        self.make_language_comments()
+        self.make_school_comments()
+        self.make_democracy_comments()
+        self.make_votes()
 
     def get_staff_user(self):
         return choice(self.staff_users)
+
+    def get_user(self):
+        return choice(self.users)
 
 
 def make_examples(users=None, verbose=False):

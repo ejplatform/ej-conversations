@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import serializers
 
-from .mixins import HasAuthorSerializer, HasLinksSerializer
+from .mixins import HasAuthorSerializer, HasLinksSerializer, join_url
 from .models import Category, Conversation, Comment, Vote
 
 
@@ -22,18 +22,25 @@ class CategorySerializer(HasLinksSerializer):
 
 class ConversationSerializer(HasAuthorSerializer):
     statistics = serializers.SerializerMethodField()
+    category_name = serializers.SerializerMethodField()
 
     class Meta:
         model = Conversation
-        fields = ('links', 'title', 'slug', 'description', 'author_name',
-                  'created', 'modified', 'is_promoted', 'category', 'statistics')
+        fields = ('links', 'title', 'question', 'slug', 'author_name',
+                  'created', 'modified', 'is_promoted', 'category', 'category_name', 'statistics')
         extra_kwargs = {
             'url': {'lookup_field': 'slug'},
-            'category': {'lookup_field': 'slug'},
+            'category': {'lookup_field': 'slug', 'write_only': True},
         }
 
     def get_inner_links(self, obj):
         return ['user_data', 'votes', 'approved_comments', 'random_comment']
+
+    def get_links(self, obj):
+        links = super().get_links(obj)
+        path = reverse('category-detail', kwargs={'slug': obj.category.slug})
+        links['category'] = join_url(self.url_prefix, path)
+        return links
 
     def get_statistics(self, obj):
         try:
@@ -41,6 +48,9 @@ class ConversationSerializer(HasAuthorSerializer):
         except AttributeError:
             obj._statistics = statistics = obj.get_statistics()
             return statistics
+
+    def get_category_name(self, obj):
+        return obj.category.name
 
 
 class CommentSerializer(HasAuthorSerializer):

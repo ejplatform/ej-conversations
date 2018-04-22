@@ -1,57 +1,46 @@
+from tests.examples import CATEGORY, USER_ROOT, USER, COMMENT, CONVERSATION, VOTE
+
+
 class TestRoutes:
     def test_categories_endpoint(self, category_db, api):
-        assert api.get('/categories/category/') == {
-            'links': {'self': 'http://testserver/categories/category/'},
-            'name': 'Category',
-            'slug': 'category',
-            'image': None,
-            'image_caption': '',
-        }
+        assert api.get('/categories/category/') == CATEGORY
         assert api.get('/categories/bad-category/', raw=True).status_code == 404
 
     def test_users_endpoint(self, user_db, root_db, api):
-        assert api.get('/users/root/') == {
-            'url': 'http://testserver/users/root/',
-            'username': 'root',
-        }
-        assert api.get('/users/user/') == {
-            'url': 'http://testserver/users/user/',
-            'username': 'user',
-        }
+        assert api.get('/users/root/') == USER_ROOT
+        assert api.get('/users/user/') == USER
 
     def test_conversations_endpoint(self, conversation_db, api):
-        data = api.get('/conversations/conversation/', exclude=['created', 'modified'])
-        assert data == {
-            'links': {
-                'approved_comments': 'http://testserver/conversations/conversation/approved_comments',
-                'author': 'http://testserver/users/user/',
-                'random_comment': 'http://testserver/conversations/conversation/random_comment',
-                'self': 'http://testserver/conversations/conversation/',
-                'user_data': 'http://testserver/conversations/conversation/user_data',
-                'votes': 'http://testserver/conversations/conversation/votes',
-            },
-            'author_name': 'user',
-            'category': None,
-            'title': 'Conversation',
-            'slug': 'conversation',
-            'description': 'description',
-            'is_promoted': False,
-            'statistics': {
-                'comments': {
-                    'approved': 0,
-                    'rejected': 0,
-                    'pending': 0,
-                    'total': 0,
-                },
-                'votes': {
-                    'agree': 0,
-                    'disagree': 0,
-                    'skip': 0,
-                    'total': 0,
-                },
-                'participants': 0,
-            },
-        }
+        path = f'/conversations/{conversation_db.slug}/'
+        data = api.get(path,
+                       exclude=['created', 'modified'])
+        assert data == CONVERSATION
 
         # Random conversations
         assert api.get('/conversations/random/', raw=True).status_code == 200
+
+        # Check inner links work
+        assert api.get(path + 'user_data/') == {
+            'participation_ratio': 0.0,
+        }
+        assert api.get(path + 'votes/') == []
+        assert api.get(path + 'approved_comments/') == []
+        assert api.get(path + 'random_comment/') == {
+            'error': True,
+            'message': 'No comments available for this user',
+        }
+
+    def test_comments_endpoint(self, comment_db, api):
+        data = api.get(f'/comments/{comment_db.id}/',
+                       exclude=['created', 'modified'])
+        assert data == COMMENT
+
+    def test_votes_endpoint(self, vote_db, api):
+        # Requesting from non-authenticated user
+        assert api.get('/votes/') == {
+            'count': 0, 'next': None, 'previous': None, 'results': [],
+        }
+
+        # Now we force authentication
+        api.client.force_login(vote_db.author, backend=None)
+        assert api.get(f'/votes/{vote_db.id}/') == VOTE

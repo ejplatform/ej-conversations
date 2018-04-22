@@ -3,6 +3,9 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+VOTING_ERROR = (lambda: ValueError(
+    f"vote should be one of 'agree', 'disagree' or 'skip', got {value}"))
+
 
 class Vote(models.Model):
     """
@@ -50,7 +53,20 @@ class Vote(models.Model):
     class Meta:
         unique_together = ('author', 'comment')
 
+    @classmethod
+    def normalize_vote(cls, value):
+        """
+        Normalize numeric and string values to the correct vote value that
+        should be stored in the database.
+        """
+        if value in cls.VOTE_NAMES:
+            return value
+        try:
+            return cls.VOTE_VALUES[value]
+        except KeyError:
+            raise VOTING_ERROR()
+
     def clean(self, *args, **kwargs):
-        if not self.comment.is_approved:
-            msg = _('comment must be approved to receive votes')
+        if self.comment.is_pending:
+            msg = _('non-moderated comments cannot receive votes')
             raise ValidationError(msg)

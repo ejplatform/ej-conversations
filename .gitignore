@@ -6,3 +6,4 @@ __pycache__/
 .tox/
 src/ej_conversations.egg-info/
 dist
+htmlcov/

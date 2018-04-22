@@ -1,3 +1,4 @@
+import logging
 from random import randrange
 
 from autoslug import AutoSlugField
@@ -5,20 +6,22 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db import models
 from django.db.models import Q
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
 from .comment import Comment
 from .limits import Limits
+from .managers import ConversationManager
 from .vote import Vote
 from ..utils import CommentLimitStatus
 from ..utils import custom_slugify
-from .managers import ConversationManager
 
 NOT_GIVEN = object()
 
 BAD_LIMIT_STATUS = {CommentLimitStatus.BLOCKED,
                     CommentLimitStatus.TEMPORARILY_BLOCKED}
+log = logging.getLogger('ej_conversations')
 
 
 class Conversation(TimeStampedModel):
@@ -44,6 +47,7 @@ class Conversation(TimeStampedModel):
     author = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
+        related_name='conversations',
         help_text=_(
             'Only the author and administrative staff can edit this conversation.'
         )
@@ -61,6 +65,9 @@ class Conversation(TimeStampedModel):
     is_promoted = models.BooleanField(
         _('Promoted'),
         default=False,
+        help_text=_(
+            'Promoted conversations take priority in the list of conversations.'
+        )
     )
     limits = models.ForeignKey(
         'Limits',
@@ -87,12 +94,14 @@ class Conversation(TimeStampedModel):
         return self.title
 
     def get_absolute_url(self):
-        # TODO: make this configurable!
-        return '/conversations/' + self.slug
+        map = getattr(settings, 'EJ_CONVERSATIONS_URLMAP', {})
+        fmt = map.get('conversation-detail', None)
+        if fmt is None:
+            return reverse('conversation-detail', kwargs={'slug': self.slug})
+        return fmt.format(conversation=self)
 
     def create_comment(self, author, content, commit=True, *,
-                       check_limits=True,
-                       **kwargs):
+                       check_limits=True, **kwargs):
         """
         Create a new comment object for the given user.
 
@@ -107,8 +116,11 @@ class Conversation(TimeStampedModel):
             if limit in BAD_LIMIT_STATUS:
                 raise PermissionError(CommentLimitStatus.MESSAGES[limit])
 
-        make_comment = Comment.objects.create_or_update if commit else Comment
-        return make_comment(author=author, content=content, **kwargs)
+        make_comment = Comment.objects.create if commit else Comment
+        kwargs.update(author=author, content=content)
+        comment = make_comment(conversation=self, **kwargs)
+        log.info('new comment: %s' % comment)
+        return comment
 
     def get_statistics(self):
         """
@@ -144,6 +156,10 @@ class Conversation(TimeStampedModel):
         """
         Get information about user.
         """
+        if not user.id:
+            return dict(
+                participation_ratio=0.0,
+            )
         return dict(
             participation_ratio=self.get_participation_ratio(user),
         )

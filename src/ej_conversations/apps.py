@@ -4,7 +4,7 @@ from django.conf import settings
 
 class EjConversationsConfig(AppConfig):
     name = 'ej_conversations'
-    verbose_name = "EJ Conversations"
+    verbose_name = "Conversations"
 
     def ready(self):
 

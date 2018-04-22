@@ -144,7 +144,7 @@ class VoteViewSet(viewsets.ModelViewSet):
             return super().create(request, *args, **kwargs)
         except IntegrityError:
             return Response({
-                'message': _('cannot vote twice in the same conversation'),
+                'message': _('cannot vote twice in the same comment'),
                 'error': True,
             })
         except ValidationError as ex:

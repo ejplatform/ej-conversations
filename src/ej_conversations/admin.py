@@ -1,8 +1,11 @@
 from django.contrib import admin
+from django.utils.translation import ugettext as _
+from django.conf import settings
 
 from .models import Conversation, Category, Limits, Comment, Vote
 
 register = (lambda model: lambda cfg: admin.site.register(model, cfg) or cfg)
+SHOW_VOTES = getattr(settings, 'EJ_CONVERSATIONS_SHOW_VOTES', False)
 
 
 class VoteInline(admin.TabularInline):
@@ -12,28 +15,53 @@ class VoteInline(admin.TabularInline):
 
 @register(Comment)
 class CommentAdmin(admin.ModelAdmin):
-    fields = ['conversation', 'author', 'content', 'status', 'rejection_reason']
-    list_display = ['id', 'content', 'conversation', 'created', 'status']
-    list_editable = ['status', ]
-    list_filter = ['conversation', 'status']
-    raw_id_fields = ['author']
-    inlines = [VoteInline]
+    fieldsets = [
+        (None, {'fields': ['conversation', 'content']}),
+        (_('Moderation'), {'fields': ['status', 'rejection_reason']}),
+    ]
+    list_display = ['content', 'conversation', 'created', 'status']
+    list_editable = ['status']
+    list_filter = ['conversation', 'status', 'created']
+
+    if SHOW_VOTES:
+        inlines = [VoteInline]
+
+    def save_model(self, request, obj, form, change):
+        obj.author = request.user
+        return super().save_model(request, obj, form, change)
 
 
 @register(Limits)
 class LimitsAdmin(admin.ModelAdmin):
-    pass
+    add_form_template = 'admin/change_form.html'
+    fieldsets = [
+        (None,
+         {'fields': ['description', 'interval']}),
+        (_('Comements'),
+         {'fields': ['max_comments_in_interval',
+                     'max_comments_per_conversation']}),
+        (_('Votes'),
+         {'fields': ['max_votes_in_interval', 'max_votes_per_conversation']}),
+    ]
 
 
 @register(Category)
 class CategoryAdmin(admin.ModelAdmin):
     fields = ['name', 'image', 'image_caption']
-    list_display = ['id', 'name', 'slug', 'created', 'modified']
+    list_display = ['name', 'slug', 'created', 'has_image']
+    list_filter = ['created', 'modified']
+
+    def has_image(self, obj):
+        has_image = obj.image is not None
+        return _('yes') if has_image else _('no')
 
 
 @register(Conversation)
 class ConversationAdmin(admin.ModelAdmin):
-    fields = ['author', 'title', 'description', 'is_promoted', 'category']
-    list_display = ['slug', 'title', 'author', 'created', 'modified']
-    list_filter = ['is_promoted']
-    raw_id_fields = ['author']
+    fields = ['title', 'question', 'category', 'is_promoted']
+    list_display = ['title', 'slug', 'author', 'created']
+    list_filter = ['is_promoted', 'created', 'category__name']
+
+    def save_model(self, request, obj, form, change):
+        obj.author = request.user
+        return super().save_model(request, obj, form, change)

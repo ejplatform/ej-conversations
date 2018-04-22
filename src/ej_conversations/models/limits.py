@@ -13,26 +13,51 @@ class Limits(models.Model):
     description = models.CharField(
         _('Description'),
         max_length=140,
+        unique=True,
+        help_text=_(
+            'A memorable description of your limit configuration. The '
+            'description is used to reference this configuration in other '
+            'conversation objects.'
+        ),
     )
     interval = models.IntegerField(
-        _('Reference interval'),
+        _('Reference interval (in seconds)'),
         default=10 * 60,
-        help_text=_('Inteval in seconds'),
+        help_text=_(
+            'We avoid spam and bots by preventing users for posting too many '
+            'comments or votes in the given interval.'
+        ),
     )
     max_comments_in_interval = models.IntegerField(
-        _('Maximum number of posts in an interval'),
+        _('Maximum number of comments'),
         default=3,
-        help_text=_('Maximum number of comments in the reference interval'),
-    )
-    max_votes_in_interval = models.IntegerField(
-        _('Maximum number of votes in the given interval'),
-        default=100,
-        help_text=_('Maximum number of votes in the reference interval'),
+        help_text=_(
+            'Users can post at most this number of comments in the reference '
+            'interval.'
+        ),
     )
     max_comments_per_conversation = models.IntegerField(
-        _('Maximum number of posts'),
+        _('Maximum number of comments (global)'),
         default=5,
-        help_text=_('Global number of comments'),
+        help_text=_(
+            'Limit the number of comments in a single conversation.'
+        ),
+    )
+    max_votes_in_interval = models.IntegerField(
+        _('Maximum number of votes'),
+        default=100,
+        help_text=_(
+            'Limit the number of votes. Usually this should be a much higher '
+            'number than the number of comments limit.'
+        ),
+    )
+    max_votes_per_conversation = models.IntegerField(
+        _('Maximum number of votes (global)'),
+        blank=True, null=True,
+        help_text=_(
+            'Limit the number of votes in a single conversation. No limit is'
+            'enforced by default.'
+        ),
     )
 
     class Meta:
@@ -76,4 +101,4 @@ class Limits(models.Model):
                 .filter(created__gte=start_time)
                 .count()
         )
-        return max(self.max_comments_in_interval - comments)
+        return max(self.max_comments_in_interval - comments, 0)
