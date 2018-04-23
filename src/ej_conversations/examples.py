@@ -5,9 +5,10 @@ from random import choice, random
 
 from django.contrib.auth import get_user_model
 from django.db.models import Model
+from faker import Factory
 
 from .models import Category, Comment
-from faker import Factory
+
 fake = Factory.create()
 
 User = get_user_model()
@@ -89,16 +90,20 @@ class ExampleData:
 
     def make_votes(self):
         comments = list(Comment.APPROVED.all())
-        probs = [(x, random(), random(), random() / 3) for x in comments]
-        for comment, p_vote, p_ok, p_skip in probs:
+        probs = [(x, (random(), random(), random() / 3)) for x in comments]
+        for comment, probs in probs:
             for user in self.users:
-                if random() < p_vote:
-                    if random() < p_skip:
-                        comment.vote(user, 'skip')
-                    elif random() < p_ok:
-                        comment.vote(user, 'agree')
-                    else:
-                        comment.vote(user, 'disagree')
+                self.random_vote(comment, user, probs)
+
+    def random_vote(self, comment, user, probs):
+        p_vote, p_skip, p_ok = probs
+        if random() < p_vote:
+            if random() < p_skip:
+                comment.vote(user, 'skip')
+            elif random() < p_ok:
+                comment.vote(user, 'agree')
+            else:
+                comment.vote(user, 'disagree')
 
     def make_all(self):
         self.make_categories()

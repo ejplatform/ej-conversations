@@ -1,6 +1,6 @@
+from django.conf import settings
 from django.contrib import admin
 from django.utils.translation import ugettext as _
-from django.conf import settings
 
 from .models import Conversation, Category, Limits, Comment, Vote
 
@@ -13,8 +13,14 @@ class VoteInline(admin.TabularInline):
     raw_id_fields = ['author']
 
 
+class AuthorIsUserMixin(admin.ModelAdmin):
+    def save_model(self, request, obj, *args, **kwargs):
+        obj.author = request.user
+        return super().save_model(request, obj, *args, **kwargs)
+
+
 @register(Comment)
-class CommentAdmin(admin.ModelAdmin):
+class CommentAdmin(AuthorIsUserMixin, admin.ModelAdmin):
     fieldsets = [
         (None, {'fields': ['conversation', 'content']}),
         (_('Moderation'), {'fields': ['status', 'rejection_reason']}),
@@ -25,10 +31,6 @@ class CommentAdmin(admin.ModelAdmin):
 
     if SHOW_VOTES:
         inlines = [VoteInline]
-
-    def save_model(self, request, obj, form, change):
-        obj.author = request.user
-        return super().save_model(request, obj, form, change)
 
 
 @register(Limits)
@@ -57,11 +59,7 @@ class CategoryAdmin(admin.ModelAdmin):
 
 
 @register(Conversation)
-class ConversationAdmin(admin.ModelAdmin):
+class ConversationAdmin(AuthorIsUserMixin, admin.ModelAdmin):
     fields = ['title', 'question', 'category', 'is_promoted']
     list_display = ['title', 'slug', 'author', 'created']
     list_filter = ['is_promoted', 'created', 'category__name']
-
-    def save_model(self, request, obj, form, change):
-        obj.author = request.user
-        return super().save_model(request, obj, form, change)
