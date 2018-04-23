@@ -15,4 +15,9 @@ COLOR_RE = re.compile(r'^#[0-9A-Fa-f]{3}(?:[0-9A-Fa-f]{3})?$')
 
 def validate_color(color):
     if not COLOR_RE.fullmatch(color) and color not in COLOR_NAMES:
-        raise ValidationError(_("{color} is a bad color", color=color))
+        raise ValidationError(_("'{color}' is a bad color value", color=color))
+
+
+def is_not_empty(text):
+    if not text.strip():
+        raise ValidationError(_('Field cannot be empty!'))

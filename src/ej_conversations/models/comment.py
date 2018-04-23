@@ -2,12 +2,14 @@ from logging import getLogger
 
 from django.conf import settings
 from django.core.exceptions import ValidationError
+from django.core.validators import MinLengthValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 from model_utils.choices import Choices
 from model_utils.models import TimeStampedModel, StatusModel
 
 from .vote import Vote
+from ..validators import is_not_empty
 
 log = getLogger('ej-conversations')
 
@@ -39,6 +41,7 @@ class Comment(StatusModel, TimeStampedModel):
     content = models.TextField(
         _('Content'),
         max_length=140,
+        validators=[MinLengthValidator(2), is_not_empty],
         help_text=_('Body of text for the comment'),
     )
     rejection_reason = models.TextField(

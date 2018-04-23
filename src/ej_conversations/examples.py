@@ -10,7 +10,6 @@ from faker import Factory
 from .models import Category, Comment
 
 fake = Factory.create()
-
 User = get_user_model()
 
 
