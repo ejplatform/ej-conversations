@@ -64,7 +64,7 @@ class Comment(StatusModel, TimeStampedModel):
         if value is None:
             return cls.STATUS.PENDING
         try:
-            return cls.STATUS_MAP[value]
+            return cls.STATUS_MAP[value.lower()]
         except KeyError:
             raise ValueError(f'invalid status value: {value}')
 
