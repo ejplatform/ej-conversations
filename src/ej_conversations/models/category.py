@@ -1,5 +1,6 @@
 from django.core.exceptions import ValidationError
 from django.db import models
+from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
@@ -47,6 +48,9 @@ class Category(TimeStampedModel):
         if self.image_caption and not self.image:
             msg = _('Cannot define a caption for category with no image')
             raise ValidationError({'image_caption': msg})
+
+    def get_absolute_url(self):
+        return f'/conversations/{self.slug}/'
 
     def create_conversation(self, question, title, author, *, commit=True, **kwargs):
         """
