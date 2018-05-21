@@ -30,7 +30,7 @@ class Limits(models.Model):
     )
     max_comments_in_interval = models.IntegerField(
         _('Maximum number of comments'),
-        default=3,
+        default=1,
         help_text=_(
             'Users can post at most this number of comments in the reference '
             'interval.'
@@ -38,7 +38,7 @@ class Limits(models.Model):
     )
     max_comments_per_conversation = models.IntegerField(
         _('Maximum number of comments (global)'),
-        default=5,
+        default=2,
         help_text=_(
             'Limit the number of comments in a single conversation.'
         ),
@@ -67,15 +67,16 @@ class Limits(models.Model):
     def __str__(self):
         return self.name
 
-    def get_comment_status(self, user, conversation):
+    def user_status(self, user, conversation):
         """
-        Verify specific user nudge status in a conversation
+        Verify the limits applied to a user in a conversation.
         """
+
         n_total = self.remaining_comments(user, conversation)
         if n_total == 0:
             return CommentLimitStatus.BLOCKED
 
-        n_interval = self.remaining_interval_comments(user, conversation)
+        n_interval = self.remaining_comments(user, conversation, interval=True)
         if n_interval == 0:
             return CommentLimitStatus.TEMPORARILY_BLOCKED
         elif n_interval == 1 or n_total == 1:
@@ -83,26 +84,22 @@ class Limits(models.Model):
         else:
             return CommentLimitStatus.OK
 
-    def remaining_comments(self, user, conversation):
+    def remaining_comments(self, user, conversation, interval=False):
         """
         Return the number of comments a user can still post in a conversation.
-        """
-        comments = user.comments.filter(conversation_id=conversation.id).count()
-        return max(self.max_comments_per_conversation - comments, 0)
 
-    def remaining_interval_comments(self, user, conversation):
+        If interval=True, compute only comments still allowed in the reference
+        interval rather than the global comment limit.
         """
-        Return the number of comments a user can still post in a conversation
-        in the reference interval.
-        """
-        start_time = self._now() - self.timedelta
-        comments = (
-            user.comments
-                .filter(conversation_id=conversation.id)
-                .filter(created__gte=start_time)
-                .count()
-        )
-        return max(self.max_comments_in_interval - comments, 0)
+        if interval:
+            start_time = self._now() - self.timedelta
+            filter = dict(conversation_id=conversation.id, created__gte=start_time)
+            comments = user.comments.filter(**filter).count()
+            return max(self.max_comments_in_interval - comments, 0)
+        else:
+            filter = dict(conversation_id=conversation.id)
+            comments = user.comments.filter(**filter).count()
+            return max(self.max_comments_per_conversation - comments, 0)
 
     @staticmethod
     def _now():

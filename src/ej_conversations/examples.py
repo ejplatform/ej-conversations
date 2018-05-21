@@ -44,7 +44,7 @@ class ExampleData:
 
     def make_conversations(self):
         self.better_language = self.tech.create_conversation(
-            'We want to create the best programming language. How it should be?',
+            'We want to create the best programming language. How should it be?',
             'A better programming language',
             self.get_staff_user(),
         )

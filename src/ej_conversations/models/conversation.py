@@ -237,11 +237,11 @@ class Conversation(TimeStampedModel):
         Verify specific user limits for posting comments in a conversation.
         """
         limits = self.limits or Limits()
-        return limits.get_comment_status(user, self)
+        return limits.user_status(user, self)
 
     def get_vote_data(self, user=None):
         """
-        Like get_votes(), but restur a list of (value, author, comment)
+        Like get_votes(), but return a list of (value, author, comment)
         tuples for each vote cast in the conversation.
         """
         return list(self.get_votes(user))
@@ -274,25 +274,17 @@ class Conversation(TimeStampedModel):
 
 def vote_count(conversation, type=None):
     """
-    Return the number of votes of a given type
-
-    ``type=None`` for all votes.
+    Return the number of votes of a given type.
     """
-
-    kwargs = {'value': type} if type is not None else {}
-    return (
-        Vote.objects
-            .filter(comment__conversation_id=conversation.id, **kwargs)
-            .count()
-    )
+    kwargs = dict(comment__conversation_id=conversation.id)
+    if type is not None:
+        kwargs['value'] = type
+    return Vote.objects.filter(**kwargs).count()
 
 
 def comment_count(conversation, type=None):
     """
     Return the number of comments of a given type.
-
-    ``type=None`` for all comments.
     """
-
     kwargs = {'status': type} if type is not None else {}
     return conversation.comments.filter(**kwargs).count()

@@ -25,7 +25,8 @@ class Comment(StatusModel, TimeStampedModel):
         ('REJECTED', _('rejected')),
     )
     STATUS_MAP = {
-        'pending': STATUS.PENDING, 'approved': STATUS.APPROVED,
+        'pending': STATUS.PENDING,
+        'approved': STATUS.APPROVED,
         'rejected': STATUS.REJECTED,
     }
     conversation = models.ForeignKey(
@@ -50,6 +51,14 @@ class Comment(StatusModel, TimeStampedModel):
         help_text=_(
             'You must provide a reason to reject a comment. Users will receive '
             'this feedback.'
+        ),
+    )
+    is_promoted = models.BooleanField(
+        _('Promoted comment?'),
+        default=False,
+        help_text=_(
+            'Promoted comments are prioritized when selecting random comments'
+            'to users.'
         ),
     )
     is_approved = property(lambda self: self.status == self.STATUS.APPROVED)
@@ -119,8 +128,8 @@ class Comment(StatusModel, TimeStampedModel):
         disagree = votes_counter(self, Vote.DISAGREE)
         skip = votes_counter(self, Vote.SKIP)
         total = agree + disagree + skip
-
         missing = Vote.objects.values_list('author_id').distinct().count() - total
+
         stats = dict(agree=agree, disagree=disagree, skip=skip,
                      total=total, missing=missing)
 

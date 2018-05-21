@@ -1,6 +1,5 @@
 from django.core.exceptions import ValidationError
 from django.db import models
-from django.urls import reverse
 from django.utils.translation import ugettext_lazy as _
 from model_utils.models import TimeStampedModel
 
@@ -60,6 +59,4 @@ class Category(TimeStampedModel):
         if commit:
             return self.conversations.create(**kwargs)
         else:
-            from .conversation import Conversation
-
-            return Conversation(category=self, **kwargs)
+            return self.conversations.model(category=self, **kwargs)
